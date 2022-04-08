@@ -2,11 +2,11 @@
 #include <vector>
 
 pure_pursuit::pure_pursuit(ros::NodeHandle &n){
-    lf = 0.029;
-    lr = 0.033;
+    lf = 0.10;
+    lr = 0.16;
     last_s = 0;
     isSetTrack = false;
-    lookHeadDist = 0.5;
+    lookHeadDist = 0.8;
     ekf_state_sub = n.subscribe("/EKF/State", 10, &pure_pursuit::ekfStateCallback, this);
     ref_path_sub = n.subscribe("/RefPath", 10, &pure_pursuit::refPathCallback, this);
 
@@ -38,15 +38,15 @@ void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& m
         control_msg.data.push_back(u0.dD);
         control_msg.data.push_back(u0.dDelta);
         control_msg.data.push_back(u0.dVs);
-        if(TempSimuEnd < 259){
-            control_pub.publish(control_msg);
-        }
-        else{
-            // TrackPos track_xy = cur_track.getTrack();
-            // plotter.plotRun(log,track_xy);
-            // plotter.plotSim(log,track_xy);
-            isSetTrack = false;
-        }
+        // if(TempSimuEnd < 259){
+        control_pub.publish(control_msg);
+        // }
+        // else{
+        //     // TrackPos track_xy = cur_track.getTrack();
+        //     // plotter.plotRun(log,track_xy);
+        //     // plotter.plotSim(log,track_xy);
+        //     isSetTrack = false;
+        // }
         
     }
 }
