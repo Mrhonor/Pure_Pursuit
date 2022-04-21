@@ -20,7 +20,7 @@
 
 ArcLengthSpline::ArcLengthSpline()
 { 
-    max_dist = 1;
+    max_dist = 3;
 }
 
 

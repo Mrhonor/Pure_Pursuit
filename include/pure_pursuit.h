@@ -7,9 +7,9 @@
 #include "track.h"
 #include "math.h"
 #include "arc_length_spline.h"
+#include  <fstream>
 
 using namespace std;
-
 
 
 
@@ -38,6 +38,7 @@ private:
     bool isSetTrack;
     Track cur_track;
     ArcLengthSpline track_;
+    fstream outlog;
 
     // ros
     ros::Subscriber ekf_state_sub; // 状态向量订阅
@@ -48,7 +49,7 @@ private:
     
 public:
     pure_pursuit(ros::NodeHandle &n);
-    ~pure_pursuit(){}
+    ~pure_pursuit();
 
     Input calcPurePursuit(const State& );
 

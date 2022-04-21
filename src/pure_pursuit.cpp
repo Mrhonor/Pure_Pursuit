@@ -1,23 +1,30 @@
 #include "pure_pursuit.h"
 #include <vector>
 
+
 pure_pursuit::pure_pursuit(ros::NodeHandle &n){
     lf = 0.10;
     lr = 0.16;
     last_s = 0;
     isSetTrack = false;
-    lookHeadDist = 0.8;
+    lookHeadDist = 0.6;
     ekf_state_sub = n.subscribe("/EKF/State", 10, &pure_pursuit::ekfStateCallback, this);
     ref_path_sub = n.subscribe("/RefPath", 10, &pure_pursuit::refPathCallback, this);
 
     control_pub = n.advertise<std_msgs::Float64MultiArray>("/MPCC/Control", 10);
+    outlog.open("/home/mr/robot_ws/src/Pure_Pursuit/log.txt", ios::out | ios::trunc);
     
+}
+
+pure_pursuit::~pure_pursuit(){
+    outlog.close();
 }
 
 void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg){
     State x0;
     x0.X = msg->data[0];
     x0.Y = msg->data[1];
+    
     // Eigen::Quaterniod q(msg->data[2], msg->data[3],
     //                     msg->data[4], msg->data[4]);
     // x0.phi = q.matrix().eulerAngle(2,1,0)[2];
@@ -33,6 +40,7 @@ void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& m
     double TempSimuEnd = msg->data[9];
 
     if(isSetTrack){
+        outlog << x0.X << ", " << x0.Y << endl;
         Input u0 = calcPurePursuit(x0);
         std_msgs::Float64MultiArray control_msg;
         control_msg.data.push_back(u0.dD);
@@ -120,10 +128,12 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     rearX.s = last_s;
     rearX.s = track_.porjectOnSpline(x);
     last_s = rearX.s;
+    ROS_INFO("S : %lf", rearX.s);
     rearX.s += lookHeadDist;
     // unwrap限制当前弧长在{0,L}之间
     rearX.unwrap(track_.getLength());
     Eigen::Vector2d targetPos = track_.getPostion(rearX.s);
+    ROS_INFO("x : %lf, y: %lf", targetPos[0], targetPos[1]);
     double R = sqrt(pow(targetPos[0]-rearX.X, 2) + pow(targetPos[1]-rearX.Y, 2));
     double alpha = atan2(targetPos[1]-rearX.Y, targetPos[0]- rearX.X) - x.phi;
     double alphaf = atan(2*(lr+lf)*sin(alpha)/R);
