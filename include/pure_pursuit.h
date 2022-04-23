@@ -35,6 +35,8 @@ private:
     double lf;
     double last_s;
     double lookHeadDist;
+    double lambda;
+    double minL_s;
     bool isSetTrack;
     Track cur_track;
     ArcLengthSpline track_;

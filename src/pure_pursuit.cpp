@@ -7,7 +7,9 @@ pure_pursuit::pure_pursuit(ros::NodeHandle &n){
     lr = 0.16;
     last_s = 0;
     isSetTrack = false;
-    lookHeadDist = 0.6;
+    lookHeadDist = 0.5;
+    minL_s = 0.1;
+    lambda = 1;
     ekf_state_sub = n.subscribe("/EKF/State", 10, &pure_pursuit::ekfStateCallback, this);
     ref_path_sub = n.subscribe("/RefPath", 10, &pure_pursuit::refPathCallback, this);
 
@@ -40,7 +42,7 @@ void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& m
     double TempSimuEnd = msg->data[9];
 
     if(isSetTrack){
-        outlog << x0.X << ", " << x0.Y << endl;
+        outlog << x0.X << ", " << x0.Y << , << x0.phi << std::endl;
         Input u0 = calcPurePursuit(x0);
         std_msgs::Float64MultiArray control_msg;
         control_msg.data.push_back(u0.dD);
@@ -129,7 +131,12 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     rearX.s = track_.porjectOnSpline(x);
     last_s = rearX.s;
     ROS_INFO("S : %lf", rearX.s);
-    rearX.s += lookHeadDist;
+    Eigen::Vector2d curPos = track_.getPostion(rearX.s);
+    double dist = sqrt(pow(x.X-curPos[0], 2) + pow(x.Y-curPos[1], 2));
+    double L_s = lookHeadDist - lambda * dist;
+    if(L_s < minL_s) L_s = minL_s;
+
+    rearX.s += L_s;
     // unwrap限制当前弧长在{0,L}之间
     rearX.unwrap(track_.getLength());
     Eigen::Vector2d targetPos = track_.getPostion(rearX.s);
