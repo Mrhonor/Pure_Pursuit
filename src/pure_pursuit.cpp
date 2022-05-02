@@ -3,18 +3,18 @@
 
 
 pure_pursuit::pure_pursuit(ros::NodeHandle &n){
-    lf = 0.10;
-    lr = 0.16;
+    lf = 0.26;
+    lr = 0.0;
     last_s = 0;
     isSetTrack = false;
     lookHeadDist = 0.5;
-    minL_s = 0.1;
-    lambda = 1;
+    minL_s = 0.15;
+    lambda = 0.6;
     ekf_state_sub = n.subscribe("/EKF/State", 10, &pure_pursuit::ekfStateCallback, this);
     ref_path_sub = n.subscribe("/RefPath", 10, &pure_pursuit::refPathCallback, this);
 
     control_pub = n.advertise<std_msgs::Float64MultiArray>("/MPCC/Control", 10);
-    outlog.open("/home/mr/robot_ws/src/Pure_Pursuit/log.txt", ios::out | ios::trunc);
+    outlog.open("/home/firefly/robot_ws/src/Pure_Pursuit/log.txt", ios::out | ios::trunc);
     
 }
 
@@ -42,7 +42,7 @@ void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& m
     double TempSimuEnd = msg->data[9];
 
     if(isSetTrack){
-        outlog << x0.X << ", " << x0.Y << , << x0.phi << std::endl;
+        outlog << x0.X << ", " << x0.Y << ", " << x0.phi << std::endl;
         Input u0 = calcPurePursuit(x0);
         std_msgs::Float64MultiArray control_msg;
         control_msg.data.push_back(u0.dD);
@@ -143,7 +143,11 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     ROS_INFO("x : %lf, y: %lf", targetPos[0], targetPos[1]);
     double R = sqrt(pow(targetPos[0]-rearX.X, 2) + pow(targetPos[1]-rearX.Y, 2));
     double alpha = atan2(targetPos[1]-rearX.Y, targetPos[0]- rearX.X) - x.phi;
+    if(alpha > 1.57 && alpha < 3.14) alpha = 1.57;
+    if(alpha < -1.57 && alpha > -3.14) alpha = -1.57;
+
     double alphaf = atan(2*(lr+lf)*sin(alpha)/R);
+    ROS_INFO("R : %lf, alpha: %lf, alphaf: %lf", R, alpha, alphaf);
     Input u0;
     u0.dD = 0;
     u0.dDelta = alphaf;
