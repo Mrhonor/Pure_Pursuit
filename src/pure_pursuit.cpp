@@ -42,7 +42,7 @@ void pure_pursuit::ekfStateCallback(const std_msgs::Float64MultiArrayConstPtr& m
     double TempSimuEnd = msg->data[9];
 
     if(isSetTrack){
-        outlog << x0.X << ", " << x0.Y << ", " << x0.phi << std::endl;
+        
         Input u0 = calcPurePursuit(x0);
         std_msgs::Float64MultiArray control_msg;
         control_msg.data.push_back(u0.dD);
@@ -143,8 +143,8 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     ROS_INFO("x : %lf, y: %lf", targetPos[0], targetPos[1]);
     double R = sqrt(pow(targetPos[0]-rearX.X, 2) + pow(targetPos[1]-rearX.Y, 2));
     double alpha = atan2(targetPos[1]-rearX.Y, targetPos[0]- rearX.X) - x.phi;
-    if(alpha > 1.57 && alpha < 3.14) alpha = 1.57;
-    if(alpha < -1.57 && alpha > -3.14) alpha = -1.57;
+    // if(alpha > 1.57 && alpha < 3.14) alpha = 1.57;
+    // if(alpha < -1.57 && alpha > -3.14) alpha = -1.57;
 
     double alphaf = atan(2*(lr+lf)*sin(alpha)/R);
     ROS_INFO("R : %lf, alpha: %lf, alphaf: %lf", R, alpha, alphaf);
@@ -152,6 +152,9 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     u0.dD = 0;
     u0.dDelta = alphaf;
     u0.dVs = 0;
+
+    outlog << rearX.X << ", " << rearX.Y << ", " << x.phi << ", " << dist << ", " << L_s << ", " << targetPos[0] 
+    << ", " << targetPos[1] << ", " << R << ", " << alpha << ", " << alphaf << endl;
     return u0;
     
 }
