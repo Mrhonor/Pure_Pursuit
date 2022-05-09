@@ -3,13 +3,13 @@
 
 
 pure_pursuit::pure_pursuit(ros::NodeHandle &n){
-    lf = 0.26;
-    lr = 0.0;
+    lf = 0.14;
+    lr = 0.12;
     last_s = 0;
     isSetTrack = false;
     lookHeadDist = 0.5;
-    minL_s = 0.15;
-    lambda = 0.6;
+    minL_s = 0.1;
+    lambda = 1;
     ekf_state_sub = n.subscribe("/EKF/State", 10, &pure_pursuit::ekfStateCallback, this);
     ref_path_sub = n.subscribe("/RefPath", 10, &pure_pursuit::refPathCallback, this);
 
@@ -147,6 +147,19 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     // if(alpha < -1.57 && alpha > -3.14) alpha = -1.57;
 
     double alphaf = atan(2*(lr+lf)*sin(alpha)/R);
+    
+    // 小角度补偿
+    if(fabs(alphaf) < 0.1) alphaf *= 2.5;
+    else if (alphaf > 0.1 && alphaf < 0.4) 
+    {
+        alphaf = 0.25 + (alphaf-0.1) / 2;
+    }
+    else if (alphaf < -0.1 && alphaf > -0.4) 
+    {
+        alphaf = -0.25 + (alphaf+0.1) / 2;
+    }
+    
+
     ROS_INFO("R : %lf, alpha: %lf, alphaf: %lf", R, alpha, alphaf);
     Input u0;
     u0.dD = 0;
