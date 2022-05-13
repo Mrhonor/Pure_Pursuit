@@ -161,8 +161,13 @@ Input pure_pursuit::calcPurePursuit(const State& x){
     
 
     ROS_INFO("R : %lf, alpha: %lf, alphaf: %lf", R, alpha, alphaf);
+    
+    double degree = alphaf * 180 / 3.14159;
+    if(degree > 30) degree = 30;
+    else if(degree < -30) degree = -30;
+
     Input u0;
-    u0.dD = 0;
+    u0.dD = 0.5 - 0.01 * fabs(degree);
     u0.dDelta = alphaf;
     u0.dVs = 0;
 
